@@ -72,7 +72,6 @@ button{
 
 <div class="container">
 
-<!-- LOGIN SCREEN -->
 <div id="loginScreen" class="card">
   <h2>STAFF LOGIN</h2>
   <p>Chỉ dành cho nhân viên sự kiện</p>
@@ -81,7 +80,6 @@ button{
   <p id="loginError" style="color:red;"></p>
 </div>
 
-<!-- CHECK-IN SCREEN -->
 <div id="checkinScreen" class="hidden">
   <h2>🎟 CHECK-IN SYSTEM</h2>
   <div id="reader"></div>
@@ -92,9 +90,9 @@ button{
 
 <script>
 
-// 🔐 MẬT KHẨU (Bạn có thể đổi)
 const STAFF_PASSWORD = "SUGAR2026";
 
+// 🔐 LOGIN
 function checkPassword(){
   const input = document.getElementById("passwordInput").value;
 
@@ -107,18 +105,32 @@ function checkPassword(){
   }
 }
 
+// 📷 START CAMERA
 function startScanner(){
+
   const html5QrCode = new Html5Qrcode("reader");
 
   html5QrCode.start(
     { facingMode: "environment" },
     { fps: 10, qrbox: 250 },
-    (decodedText) => {
+    function(decodedText){
 
-     fetch(decodedText, {
-  method: "GET"
-})
-      .then(res => res.json())
+      let email = decodedText;
+
+      // Nếu QR chứa link thì tách email
+      if(decodedText.includes("email=")){
+        const url = new URL(decodedText);
+        email = url.searchParams.get("email");
+      }
+
+      fetch("https://script.google.com/macros/s/AKfycbxOCismnI58LPiF-O9uE-gTuEBH2S3sd2kEjabmPR536cW5Bbes6pSrkNV9WrB6NVJO/exec", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ email: email })
+      })
+      .then(response => response.json())
       .then(data => {
 
         const resultDiv = document.getElementById("result");
@@ -130,20 +142,21 @@ function startScanner(){
           ${data.time ? "⏰ " + data.time : ""}
         `;
 
-        // 🔊 Âm thanh
         if(data.status === "success"){
           new Audio("https://actions.google.com/sounds/v1/cartoon/clang_and_wobble.ogg").play();
         }
 
       })
-      .catch(()=>{
+      .catch(function(error){
         showError("Lỗi kết nối server");
+        console.error(error);
       });
 
     }
   );
 }
 
+// ❌ ERROR
 function showError(msg){
   const resultDiv = document.getElementById("result");
   resultDiv.className = "result error";
@@ -153,5 +166,4 @@ function showError(msg){
 </script>
 
 </body>
-
 </html>
