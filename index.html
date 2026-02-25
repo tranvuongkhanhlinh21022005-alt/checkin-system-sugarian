@@ -115,7 +115,9 @@ function startScanner(){
     { fps: 10, qrbox: 250 },
     (decodedText) => {
 
-      fetch(decodedText)
+     fetch(decodedText, {
+  method: "GET"
+})
       .then(res => res.json())
       .then(data => {
 
@@ -151,4 +153,5 @@ function showError(msg){
 </script>
 
 </body>
+
 </html>
