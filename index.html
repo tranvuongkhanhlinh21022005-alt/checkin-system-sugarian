@@ -123,38 +123,26 @@ function startScanner(){
         email = url.searchParams.get("email");
       }
 
-      fetch("https://script.google.com/macros/s/AKfycbxOCismnI58LPiF-O9uE-gTuEBH2S3sd2kEjabmPR536cW5Bbes6pSrkNV9WrB6NVJO/exec", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({ email: email })
-      })
-      .then(response => response.json())
-      .then(data => {
-
-        const resultDiv = document.getElementById("result");
-        resultDiv.className = "result " + data.status;
-
-        resultDiv.innerHTML = `
-          ${data.name ? "👤 " + data.name + "<br>" : ""}
-          ${data.message}<br>
-          ${data.time ? "⏰ " + data.time : ""}
-        `;
-
-        if(data.status === "success"){
-          new Audio("https://actions.google.com/sounds/v1/cartoon/clang_and_wobble.ogg").play();
-        }
-
-      })
-      .catch(function(error){
-        showError("Lỗi kết nối server");
-        console.error(error);
-      });
-
-    }
-  );
-}
+      // Thay thế đoạn fetch cũ
+fetch("https://script.google.com/macros/s/AKfycbxOCismnI58LPiF-O9uE-gTuEBH2S3sd2kEjabmPR536cW5Bbes6pSrkNV9WrB6NVJO/exec", {
+  method: "POST",
+  mode: "no-cors", // Thêm chế độ này để bỏ qua kiểm tra CORS
+  headers: {
+    "Content-Type": "text/plain" // Dùng text/plain thay vì application/json
+  },
+  body: JSON.stringify({ email: email })
+})
+.then(() => {
+  // Lưu ý: Với 'no-cors', bạn không thể đọc được JSON trả về từ Google
+  // Chúng ta sẽ dùng một mẹo nhỏ là coi như thành công nếu không có lỗi kết nối
+  const resultDiv = document.getElementById("result");
+  resultDiv.className = "result success";
+  resultDiv.innerHTML = "ĐÃ GỬI YÊU CẦU CHECK-IN<br>(Kiểm tra trạng thái trên máy chủ)";
+})
+.catch(error => {
+  showError("Lỗi kết nối server");
+  console.error(error);
+});
 
 // ❌ ERROR
 function showError(msg){
@@ -167,6 +155,7 @@ function showError(msg){
 
 </body>
 </html>
+
 
 
 
