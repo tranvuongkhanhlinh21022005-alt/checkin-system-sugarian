@@ -89,72 +89,77 @@ button{
 </div>
 
 <script>
-
 const STAFF_PASSWORD = "SUGAR2026";
 
-// 🔐 LOGIN
 function checkPassword(){
   const input = document.getElementById("passwordInput").value;
-
   if(input === STAFF_PASSWORD){
     document.getElementById("loginScreen").classList.add("hidden");
     document.getElementById("checkinScreen").classList.remove("hidden");
     startScanner();
-  }else{
+  } else {
     document.getElementById("loginError").innerText = "Sai mật khẩu!";
   }
 }
 
-// 📷 START CAMERA
 function startScanner(){
-
   const html5QrCode = new Html5Qrcode("reader");
-
+  
   html5QrCode.start(
     { facingMode: "environment" },
     { fps: 10, qrbox: 250 },
     function(decodedText){
+      // Tạm dừng quét để tránh gửi tin liên tục
+      html5QrCode.pause(true); 
 
       let email = decodedText;
-
-      // Nếu QR chứa link thì tách email
       if(decodedText.includes("email=")){
         const url = new URL(decodedText);
         email = url.searchParams.get("email");
       }
 
-      // Thay thế đoạn fetch cũ
-fetch("https://script.google.com/macros/s/AKfycbxOCismnI58LPiF-O9uE-gTuEBH2S3sd2kEjabmPR536cW5Bbes6pSrkNV9WrB6NVJO/exec", {
-  method: "POST",
-  mode: "no-cors", // Thêm chế độ này để bỏ qua kiểm tra CORS
-  headers: {
-    "Content-Type": "text/plain" // Dùng text/plain thay vì application/json
-  },
-  body: JSON.stringify({ email: email })
-})
-.then(() => {
-  // Lưu ý: Với 'no-cors', bạn không thể đọc được JSON trả về từ Google
-  // Chúng ta sẽ dùng một mẹo nhỏ là coi như thành công nếu không có lỗi kết nối
-  const resultDiv = document.getElementById("result");
-  resultDiv.className = "result success";
-  resultDiv.innerHTML = "ĐÃ GỬI YÊU CẦU CHECK-IN<br>(Kiểm tra trạng thái trên máy chủ)";
-})
-.catch(error => {
-  showError("Lỗi kết nối server");
-  console.error(error);
-});
+      const resultDiv = document.getElementById("result");
+      resultDiv.className = "result";
+      resultDiv.innerHTML = "Đang kiểm tra...";
 
-// ❌ ERROR
+      fetch("https://script.google.com/macros/s/AKfycbxOCismnI58LPiF-O9uE-gTuEBH2S3sd2kEjabmPR536cW5Bbes6pSrkNV9WrB6NVJO/exec", {
+        method: "POST",
+        mode: "no-cors", // Bắt buộc để tránh lỗi CORS khi gọi từ domain khác
+        headers: { "Content-Type": "text/plain" },
+        body: JSON.stringify({ email: email })
+      })
+      .then(() => {
+        // Với no-cors, chúng ta không đọc được nội dung trả về (Success/Error)
+        // Đây là hạn chế lớn nhất của Cách 2
+        resultDiv.className = "result success";
+        resultDiv.innerHTML = "ĐÃ GỬI YÊU CẦU!<br>Hãy kiểm tra Sheet hoặc Email.";
+        
+        // Đợi 3 giây rồi cho phép quét tiếp
+        setTimeout(() => { 
+          resultDiv.innerHTML = ""; 
+          html5QrCode.resume(); 
+        }, 3000);
+      })
+      .catch(error => {
+        showError("Lỗi kết nối server");
+        html5QrCode.resume();
+      });
+    }
+  ).catch(err => {
+     console.error("Không thể khởi động camera", err);
+  });
+} // Đóng hàm startScanner
+
 function showError(msg){
   const resultDiv = document.getElementById("result");
   resultDiv.className = "result error";
   resultDiv.innerHTML = msg;
 }
-
 </script>
 
 </body>
 </html>
+
 
 
 
